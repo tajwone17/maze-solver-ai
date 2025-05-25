@@ -31,6 +31,8 @@ export const CSS_CLASSES = {
   VISITED: "visited",
   CURRENT: "current",
   SOLUTION: "solution",
+  USER: "user",
+  COMPUTER: "computer",
 };
 
 // Animation timing settings
@@ -66,6 +68,20 @@ export const DOM_IDS = {
   CLEAR_BTN: "clearPath",
   RESET_BTN: "resetMaze",
   STATUS_TEXT: "statusText",
+};
+
+// Keyboard controls for the race game
+export const KEYS = {
+  UP: ["ArrowUp", "KeyW"],
+  DOWN: ["ArrowDown", "KeyS"],
+  LEFT: ["ArrowLeft", "KeyA"],
+  RIGHT: ["ArrowRight", "KeyD"],
+  RESTART: ["KeyR"],
+};
+
+// Game configuration
+export const GAME_CONFIG = {
+  COMPUTER_MOVE_DELAY: 200, // Delay between computer moves (ms)
 };
 
 // Status messages

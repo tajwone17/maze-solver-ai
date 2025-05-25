@@ -187,4 +187,13 @@ export class DFSSolver {
         path.length > 0 ? ((path.length / visitedCount) * 100).toFixed(1) : 0,
     };
   }
+
+  /**
+   * Set a new maze for the solver
+   * @param {Array} maze - 2D array representing the maze
+   */
+  setMaze(maze) {
+    this.maze = maze;
+    console.log("DFS solver updated with new maze");
+  }
 }

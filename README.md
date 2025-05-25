@@ -1,16 +1,30 @@
-# Maze Solver AI - Depth-First Search Algorithm
+# 🎮 Maze Race Game - User vs Computer AI
 
-A visual maze solver that demonstrates the Depth-First Search (DFS) algorithm in action. The application generates random mazes and solves them step-by-step with beautiful animations.
+A competitive maze race game where you compete against an AI computer using the Depth-First Search (DFS) algorithm. The game features real-time movement, intelligent AI pathfinding, and exciting race dynamics!
 
-## Features
+## 🎯 Game Features
 
-- **Random Maze Generation**: Uses recursive backtracking to create solvable mazes
-- **DFS Algorithm**: Implements Depth-First Search to find paths from start to end
-- **Visual Animation**: Shows the algorithm in action with real-time cell updates
-- **Interactive Controls**: Generate new mazes, solve, clear paths, and reset
-- **Responsive Design**: Works on desktop and mobile devices
-- **Modern UI**: Beautiful gradient design with smooth animations
-- **🆕 Modular Code Structure**: Clean, well-documented code split into focused files
+### 🏁 Race Mode
+
+- **Player vs Computer**: Race against an AI that uses DFS to find the optimal path
+- **Real-time Movement**: Use WASD or arrow keys for instant player movement
+- **Smart AI**: Computer finds and follows the optimal path step-by-step
+- **Win Detection**: First to reach the goal wins with celebration animations
+- **Restart Capability**: Press R to restart or click "New Game"
+
+### 🎨 Visual Features
+
+- **Player Distinction**: Blue circle with 👤 for user, pink circle with 🤖 for computer
+- **Animated Elements**: Pulsing players, win animations, and smooth transitions
+- **Real-time Updates**: See both players moving simultaneously
+- **Beautiful UI**: Modern gradient design with responsive layout
+
+### 🧠 AI Features
+
+- **DFS Pathfinding**: Computer uses Depth-First Search to find paths
+- **Optimal Strategy**: AI always finds a valid path to the goal
+- **Visualized Thinking**: Watch the AI explore and backtrack (in solve mode)
+- **Fair Competition**: AI moves at a reasonable speed for fair gameplay
 
 ## 📂 Project Structure
 
@@ -70,10 +84,52 @@ maze-solver-ai/
 
 ## 🚀 Quick Start
 
+### Option 1: Race Mode (Recommended!)
+
 1. Open `index.html` in a web browser
-2. Click **"Generate New Maze"** to create a random maze
-3. Click **"Solve Maze"** to watch DFS find the path
-4. Use other buttons to interact with the maze
+2. Click **"Start Race!"** to begin the competition
+3. Use **WASD** or **Arrow Keys** to move your player (👤)
+4. Race against the computer (🤖) to reach the red goal first!
+5. Press **R** to restart when the game ends
+
+### Option 2: Algorithm Visualization
+
+1. Click **"Generate New Maze"** to create a random maze
+2. Click **"Solve Maze"** to watch DFS find the path step-by-step
+3. Use other buttons to interact with the maze
+
+## 🎮 How to Play the Race
+
+1. **Start**: Click "Start Race!" button
+2. **Move**: Use WASD keys or Arrow keys:
+   - W/↑ - Move Up
+   - S/↓ - Move Down
+   - A/← - Move Left
+   - D/→ - Move Right
+3. **Goal**: Be the first to reach the red end cell
+4. **Restart**: Press R key or click "Start Race!" again
+5. **New Maze**: Click "Generate New Maze" for a fresh challenge
+
+## 🎯 Game Elements
+
+| Element      | Appearance | Description                       |
+| ------------ | ---------- | --------------------------------- |
+| **Player**   | 🔵👤       | You! Blue circle with person icon |
+| **Computer** | 🌸🤖       | AI opponent with robot icon       |
+| **Start**    | 🟢         | Green cell - starting position    |
+| **Goal**     | 🔴         | Red cell - finish line            |
+| **Wall**     | ⬛         | Dark blue barriers                |
+| **Path**     | ⬜         | Light gray walkable areas         |
+
+## 🧠 AI Strategy
+
+The computer opponent uses the **Depth-First Search (DFS)** algorithm:
+
+1. **Pathfinding**: Finds a valid route from start to goal
+2. **Exploration**: Systematically explores all possible paths
+3. **Backtracking**: Returns when hitting dead ends
+4. **Optimization**: Follows the discovered path efficiently
+5. **Fair Play**: Moves at human-comparable speed
 
 ## 📚 Understanding the Code
 

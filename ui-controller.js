@@ -14,13 +14,13 @@ export class UIController {
   /**
    * Initialize all DOM elements
    * Gets references to all important HTML elements
-   */
-  initializeElements() {
+   */ initializeElements() {
     this.mazeContainer = document.getElementById(DOM_IDS.MAZE_CONTAINER);
     this.generateBtn = document.getElementById(DOM_IDS.GENERATE_BTN);
     this.solveBtn = document.getElementById(DOM_IDS.SOLVE_BTN);
     this.clearBtn = document.getElementById(DOM_IDS.CLEAR_BTN);
     this.resetBtn = document.getElementById(DOM_IDS.RESET_BTN);
+    this.startRaceBtn = document.getElementById("startRace");
     this.statusText = document.getElementById(DOM_IDS.STATUS_TEXT);
 
     // Validate that all elements exist
@@ -30,14 +30,14 @@ export class UIController {
   /**
    * Validate that all required DOM elements exist
    * Throws error if any required element is missing
-   */
-  validateElements() {
+   */ validateElements() {
     const elements = {
       mazeContainer: this.mazeContainer,
       generateBtn: this.generateBtn,
       solveBtn: this.solveBtn,
       clearBtn: this.clearBtn,
       resetBtn: this.resetBtn,
+      startRaceBtn: this.startRaceBtn,
       statusText: this.statusText,
     };
 
@@ -108,7 +108,7 @@ export class UIController {
    * Update the visual state of a specific cell
    * @param {number} row - Row position
    * @param {number} col - Column position
-   * @param {string} state - New visual state ('visited', 'current', 'solution')
+   * @param {string} state - New visual state ('visited', 'current', 'solution', 'user', 'computer')
    */
   async updateCellVisual(row, col, state) {
     const cell = document.getElementById(`cell-${row}-${col}`);
@@ -121,7 +121,9 @@ export class UIController {
     cell.classList.remove(
       CSS_CLASSES.VISITED,
       CSS_CLASSES.CURRENT,
-      CSS_CLASSES.SOLUTION
+      CSS_CLASSES.SOLUTION,
+      CSS_CLASSES.USER,
+      CSS_CLASSES.COMPUTER
     );
 
     // Add new state class
@@ -136,14 +138,37 @@ export class UIController {
         cell.classList.remove(CSS_CLASSES.VISITED); // Remove visited state first
         cell.classList.add(CSS_CLASSES.SOLUTION);
         break;
+      case "user":
+        cell.classList.add(CSS_CLASSES.USER);
+        break;
+      case "computer":
+        cell.classList.add(CSS_CLASSES.COMPUTER);
+        break;
       default:
         console.warn(`Unknown cell state: ${state}`);
     }
   }
 
   /**
+   * Clear visual state from a specific cell
+   * @param {number} row - Row position
+   * @param {number} col - Column position
+   */
+  clearCellVisual(row, col) {
+    const cell = document.getElementById(`cell-${row}-${col}`);
+    if (cell) {
+      cell.classList.remove(
+        CSS_CLASSES.VISITED,
+        CSS_CLASSES.CURRENT,
+        CSS_CLASSES.SOLUTION,
+        CSS_CLASSES.USER,
+        CSS_CLASSES.COMPUTER
+      );
+    }
+  }
+  /**
    * Clear all path-related visual states from the maze
-   * Removes visited, current, and solution classes while keeping walls/paths
+   * Removes visited, current, solution, user, and computer classes while keeping walls/paths
    */
   clearPathVisuals() {
     const cells = document.querySelectorAll(".cell");
@@ -151,7 +176,9 @@ export class UIController {
       cell.classList.remove(
         CSS_CLASSES.VISITED,
         CSS_CLASSES.CURRENT,
-        CSS_CLASSES.SOLUTION
+        CSS_CLASSES.SOLUTION,
+        CSS_CLASSES.USER,
+        CSS_CLASSES.COMPUTER
       );
     });
     console.log("Path visuals cleared");
@@ -182,13 +209,13 @@ export class UIController {
 
   /**
    * Update visual appearance of buttons based on their state
-   */
-  updateButtonAppearance() {
+   */ updateButtonAppearance() {
     const buttons = [
       this.generateBtn,
       this.solveBtn,
       this.clearBtn,
       this.resetBtn,
+      this.startRaceBtn,
     ];
 
     buttons.forEach((button) => {
@@ -201,7 +228,6 @@ export class UIController {
       }
     });
   }
-
   /**
    * Setup event listeners for all buttons
    * @param {Object} callbacks - Object containing callback functions for each button
@@ -211,6 +237,9 @@ export class UIController {
     this.solveBtn.addEventListener("click", callbacks.onSolve);
     this.clearBtn.addEventListener("click", callbacks.onClear);
     this.resetBtn.addEventListener("click", callbacks.onReset);
+    if (callbacks.onStartRace) {
+      this.startRaceBtn.addEventListener("click", callbacks.onStartRace);
+    }
 
     console.log("Event listeners setup complete");
   }
@@ -248,5 +277,26 @@ export class UIController {
         cell.style.backgroundColor = originalBackground;
       }, duration);
     }
+  }
+
+  /**
+   * Show win animation for the winner
+   * @param {string} winner - "user" or "computer"
+   */
+  showWinAnimation(winner) {
+    const cells = document.querySelectorAll(`.${winner}`);
+    cells.forEach((cell) => {
+      cell.classList.add("winner-animation");
+    });
+
+    // Flash the maze border
+    this.mazeGrid.classList.add("game-over");
+
+    setTimeout(() => {
+      cells.forEach((cell) => {
+        cell.classList.remove("winner-animation");
+      });
+      this.mazeGrid.classList.remove("game-over");
+    }, 3000);
   }
 }

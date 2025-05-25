@@ -6,6 +6,7 @@
 import { MazeGenerator } from "./maze-generator.js";
 import { DFSSolver } from "./dfs-solver.js";
 import { UIController } from "./ui-controller.js";
+import { GameController } from "./game-controller.js";
 import { MESSAGES, POSITIONS, CELL_TYPES } from "./config.js";
 
 export class MazeApp {
@@ -15,15 +16,15 @@ export class MazeApp {
       solving: false, // Is the maze currently being solved?
       solved: false, // Has the maze been solved?
       mazeExists: false, // Does a maze currently exist?
-    };
-
-    // Initialize components
+    }; // Initialize components
     this.ui = new UIController();
     this.mazeGenerator = new MazeGenerator();
     this.dfsSolver = null; // Will be created when needed
+    this.gameController = null; // Will be created for race mode
 
     this.currentMaze = null;
     this.solutionPath = [];
+    this.raceMode = false;
 
     this.initialize();
   }
@@ -43,7 +44,6 @@ export class MazeApp {
 
     console.log("Application initialized successfully");
   }
-
   /**
    * Setup event listeners for UI interactions
    */
@@ -53,6 +53,7 @@ export class MazeApp {
       onSolve: () => this.solveMaze(),
       onClear: () => this.clearPath(),
       onReset: () => this.resetApplication(),
+      onStartRace: () => this.startRace(),
     };
 
     this.ui.setupEventListeners(callbacks);
@@ -254,5 +255,40 @@ export class MazeApp {
    */
   getSolutionPath() {
     return [...this.solutionPath]; // Return copy to prevent modification
+  }
+
+  /**
+   * Start a race between user and computer
+   */
+  async startRace() {
+    console.log("Starting race mode...");
+
+    if (!this.state.mazeExists) {
+      this.generateNewMaze();
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for maze generation
+    }
+
+    // Switch to race mode
+    this.raceMode = true;
+    this.resetState();
+
+    // Create DFS solver for the computer
+    this.dfsSolver = new DFSSolver(this.currentMaze, this.ui);
+
+    // Create game controller
+    this.gameController = new GameController(
+      this.currentMaze,
+      this.ui,
+      this.dfsSolver
+    );
+
+    // Start the race
+    await this.gameController.startRace();
+
+    // Update UI state
+    this.state.mazeExists = true;
+    this.updateUI();
+
+    console.log("Race started!");
   }
 }

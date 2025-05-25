@@ -111,6 +111,14 @@ h1 {
   border: 1px solid #ccc;
 }
 
+.legend-color.user {
+  background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+}
+
+.legend-color.computer {
+  background: linear-gradient(45deg, #ff9a9e, #fecfef);
+}
+
 .status p {
   color: #666;
   font-size: 16px;
@@ -183,7 +191,55 @@ h1 {
   animation: currentAnimation 0.8s infinite alternate;
 }
 
-/* Animations */
+/* Race game styles */
+#startRace {
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+  color: white;
+}
+
+.user {
+  background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.7);
+  animation: playerPulse 1s infinite alternate;
+  border-radius: 50%;
+  position: relative;
+}
+
+.user::after {
+  content: "👤";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+}
+
+.computer {
+  background: linear-gradient(45deg, #ff9a9e, #fecfef);
+  box-shadow: 0 0 15px rgba(255, 154, 158, 0.7);
+  animation: computerPulse 1s infinite alternate;
+  border-radius: 50%;
+  position: relative;
+}
+
+.computer::after {
+  content: "🤖";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+}
+
+.winner-animation {
+  animation: winnerFlash 0.5s infinite;
+}
+
+.game-over {
+  animation: gameOverFlash 1s 3;
+}
+
+/* Player animations */
 @keyframes pulse {
   0%,
   100% {
@@ -224,6 +280,51 @@ h1 {
   100% {
     transform: scale(1.2);
     box-shadow: 0 0 30px rgba(52, 152, 219, 1);
+  }
+}
+
+@keyframes playerPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.7);
+  }
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(0, 210, 255, 1);
+  }
+}
+
+@keyframes computerPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(255, 154, 158, 0.7);
+  }
+  100% {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px rgba(255, 154, 158, 1);
+  }
+}
+
+@keyframes winnerFlash {
+  0%,
+  100% {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    transform: scale(1.3);
+  }
+  50% {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    transform: scale(1.5);
+  }
+}
+
+@keyframes gameOverFlash {
+  0%,
+  100% {
+    border-color: #333;
+  }
+  50% {
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
   }
 }
 
