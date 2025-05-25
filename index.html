@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maze Solver - DFS Algorithm</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Maze Solver using Depth-First Search (DFS)</h1>
+
+      <div class="controls">
+        <button id="generateMaze" class="btn">Generate New Maze</button>
+        <button id="solveMaze" class="btn solve-btn">Solve Maze</button>
+        <button id="clearPath" class="btn">Clear Path</button>
+        <button id="resetMaze" class="btn">Reset</button>
+      </div>
+
+      <div class="info">
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color wall"></div>
+            <span>Wall</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color path"></div>
+            <span>Path</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color start"></div>
+            <span>Start</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color end"></div>
+            <span>End</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color visited"></div>
+            <span>Visited</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color solution"></div>
+            <span>Solution Path</span>
+          </div>
+        </div>
+        <div class="status">
+          <p id="statusText">Click "Generate New Maze" to start!</p>
+        </div>
+      </div>
+
+      <div id="mazeContainer" class="maze-container">
+        <!-- Maze grid will be generated here -->
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

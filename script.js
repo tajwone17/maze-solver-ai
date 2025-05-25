@@ -1,0 +1,269 @@
+class MazeSolver {
+    constructor() {
+        this.maze = [];
+        this.rows = 21; // Odd number for proper maze generation
+        this.cols = 31; // Odd number for proper maze generation
+        this.start = { row: 1, col: 1 };
+        this.end = { row: this.rows - 2, col: this.cols - 2 };
+        this.solving = false;
+        this.solved = false;
+        
+        this.initializeElements();
+        this.setupEventListeners();
+        this.generateMaze();
+    }
+
+    initializeElements() {
+        this.mazeContainer = document.getElementById('mazeContainer');
+        this.generateBtn = document.getElementById('generateMaze');
+        this.solveBtn = document.getElementById('solveMaze');
+        this.clearBtn = document.getElementById('clearPath');
+        this.resetBtn = document.getElementById('resetMaze');
+        this.statusText = document.getElementById('statusText');
+    }
+
+    setupEventListeners() {
+        this.generateBtn.addEventListener('click', () => this.generateMaze());
+        this.solveBtn.addEventListener('click', () => this.solveMaze());
+        this.clearBtn.addEventListener('click', () => this.clearPath());
+        this.resetBtn.addEventListener('click', () => this.resetMaze());
+    }
+
+    // Initialize maze with all walls
+    initializeMaze() {
+        this.maze = [];
+        for (let i = 0; i < this.rows; i++) {
+            this.maze[i] = [];
+            for (let j = 0; j < this.cols; j++) {
+                this.maze[i][j] = 0; // 0 = wall, 1 = path
+            }
+        }
+    }
+
+    // Generate maze using recursive backtracking
+    generateMaze() {
+        this.initializeMaze();
+        this.solving = false;
+        this.solved = false;
+        
+        // Create paths using recursive backtracking
+        const stack = [];
+        const startCell = { row: 1, col: 1 };
+        this.maze[startCell.row][startCell.col] = 1;
+        stack.push(startCell);
+
+        while (stack.length > 0) {
+            const current = stack[stack.length - 1];
+            const neighbors = this.getUnvisitedNeighbors(current.row, current.col);
+
+            if (neighbors.length > 0) {
+                const randomNeighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
+                
+                // Remove wall between current cell and chosen neighbor
+                const wallRow = current.row + (randomNeighbor.row - current.row) / 2;
+                const wallCol = current.col + (randomNeighbor.col - current.col) / 2;
+                
+                this.maze[wallRow][wallCol] = 1;
+                this.maze[randomNeighbor.row][randomNeighbor.col] = 1;
+                
+                stack.push(randomNeighbor);
+            } else {
+                stack.pop();
+            }
+        }
+
+        // Ensure start and end points are paths
+        this.maze[this.start.row][this.start.col] = 1;
+        this.maze[this.end.row][this.end.col] = 1;
+
+        this.renderMaze();
+        this.updateStatus("Maze generated! Click 'Solve Maze' to find the path.");
+        this.updateButtonStates();
+    }
+
+    getUnvisitedNeighbors(row, col) {
+        const neighbors = [];
+        const directions = [
+            [-2, 0], [2, 0], [0, -2], [0, 2] // Move 2 cells to ensure walls between paths
+        ];
+
+        for (const [dRow, dCol] of directions) {
+            const newRow = row + dRow;
+            const newCol = col + dCol;
+
+            if (newRow > 0 && newRow < this.rows - 1 && 
+                newCol > 0 && newCol < this.cols - 1 && 
+                this.maze[newRow][newCol] === 0) {
+                neighbors.push({ row: newRow, col: newCol });
+            }
+        }
+
+        return neighbors;
+    }
+
+    renderMaze() {
+        this.mazeContainer.innerHTML = '';
+        
+        const mazeGrid = document.createElement('div');
+        mazeGrid.className = 'maze-grid';
+        mazeGrid.style.gridTemplateColumns = `repeat(${this.cols}, 1fr)`;
+        mazeGrid.style.gridTemplateRows = `repeat(${this.rows}, 1fr)`;
+
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${i}-${j}`;
+                
+                if (this.maze[i][j] === 0) {
+                    cell.classList.add('wall');
+                } else {
+                    cell.classList.add('path');
+                }
+
+                if (i === this.start.row && j === this.start.col) {
+                    cell.classList.add('start');
+                } else if (i === this.end.row && j === this.end.col) {
+                    cell.classList.add('end');
+                }
+
+                mazeGrid.appendChild(cell);
+            }
+        }
+
+        this.mazeContainer.appendChild(mazeGrid);
+    }
+
+    async solveMaze() {
+        if (this.solving || this.solved) return;
+        
+        this.solving = true;
+        this.solved = false;
+        this.updateButtonStates();
+        this.updateStatus("Solving maze using DFS algorithm...");
+
+        // Clear any previous solution
+        this.clearPath();
+
+        const visited = new Set();
+        const path = [];
+        const found = await this.dfs(this.start.row, this.start.col, visited, path);
+
+        this.solving = false;
+        this.solved = found;
+
+        if (found) {
+            await this.highlightSolution(path);
+            this.updateStatus(`Maze solved! Path found with ${path.length} steps.`);
+        } else {
+            this.updateStatus("No solution found! The maze might be unsolvable.");
+        }
+
+        this.updateButtonStates();
+    }
+
+    async dfs(row, col, visited, path) {
+        // Check if we've reached the end
+        if (row === this.end.row && col === this.end.col) {
+            path.push({ row, col });
+            return true;
+        }
+
+        // Check bounds and if cell is valid
+        if (row < 0 || row >= this.rows || 
+            col < 0 || col >= this.cols || 
+            this.maze[row][col] === 0 || 
+            visited.has(`${row},${col}`)) {
+            return false;
+        }
+
+        // Mark as visited
+        visited.add(`${row},${col}`);
+        path.push({ row, col });
+
+        // Visual update for current cell (except start and end)
+        if (!(row === this.start.row && col === this.start.col) && 
+            !(row === this.end.row && col === this.end.col)) {
+            const cell = document.getElementById(`cell-${row}-${col}`);
+            if (cell) {
+                cell.classList.add('current');
+                await this.sleep(50); // Animation delay
+                cell.classList.remove('current');
+                cell.classList.add('visited');
+            }
+        }
+
+        // Try all four directions
+        const directions = [
+            [-1, 0], [1, 0], [0, -1], [0, 1] // up, down, left, right
+        ];
+
+        for (const [dRow, dCol] of directions) {
+            const newRow = row + dRow;
+            const newCol = col + dCol;
+
+            if (await this.dfs(newRow, newCol, visited, path)) {
+                return true;
+            }
+        }
+
+        // Backtrack
+        path.pop();
+        return false;
+    }
+
+    async highlightSolution(path) {
+        for (let i = 0; i < path.length; i++) {
+            const { row, col } = path[i];
+            
+            // Don't highlight start and end cells
+            if ((row === this.start.row && col === this.start.col) || 
+                (row === this.end.row && col === this.end.col)) {
+                continue;
+            }
+
+            const cell = document.getElementById(`cell-${row}-${col}`);
+            if (cell) {
+                cell.classList.remove('visited');
+                cell.classList.add('solution');
+                await this.sleep(100);
+            }
+        }
+    }
+
+    clearPath() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            cell.classList.remove('visited', 'solution', 'current');
+        });
+        this.solved = false;
+        this.updateButtonStates();
+        this.updateStatus("Path cleared. Click 'Solve Maze' to find the path again.");
+    }
+
+    resetMaze() {
+        this.solving = false;
+        this.solved = false;
+        this.generateMaze();
+    }
+
+    updateButtonStates() {
+        this.generateBtn.disabled = this.solving;
+        this.solveBtn.disabled = this.solving || this.solved;
+        this.clearBtn.disabled = this.solving || !this.solved;
+        this.resetBtn.disabled = this.solving;
+    }
+
+    updateStatus(message) {
+        this.statusText.textContent = message;
+    }
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Initialize the maze solver when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new MazeSolver();
+});
