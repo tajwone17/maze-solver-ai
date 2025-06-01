@@ -21,10 +21,6 @@ const START_COL = 1;
 const END_ROW = MAZE_ROWS - 2;
 const END_COL = MAZE_COLS - 2;
 
-// Animation speed (milliseconds between steps)
-const SOLVING_SPEED = 100; // How fast to animate solving
-const SOLUTION_SPEED = 200; // How fast to show the solution path
-
 // Computer movement speed during race (milliseconds between steps, medium difficulty)
 const COMPUTER_MOVE_SPEED = 300;
 
@@ -42,10 +38,8 @@ const RESTART_KEYS = ["KeyR", "r", "R"];
 let maze = [];
 
 // Various state tracking variables
-let isSolving = false; // Are we currently solving?
-let isSolved = false; // Has the maze been solved?
 let doesMazeExist = false; // Has a maze been generated?
-let solutionPath = []; // Path from start to end
+let isSolved = false; // Used to track if visualization needs clearing
 
 // Race mode variables
 let raceActive = false; // Is race mode currently active?
@@ -64,7 +58,6 @@ let computerWins = 0; // How many times the computer has won
 
 // Buttons
 let generateButton;
-let solveButton;
 let clearButton;
 let resetButton;
 let startRaceButton;
@@ -82,7 +75,6 @@ let computerScoreElement;
 document.addEventListener("DOMContentLoaded", function () {
   console.log("Page loaded, initializing maze solver..."); // Get all the buttons
   generateButton = document.getElementById("generateMazeButton");
-  solveButton = document.getElementById("solveMazeButton");
   clearButton = document.getElementById("clearPathButton");
   resetButton = document.getElementById("resetButton");
   startRaceButton = document.getElementById("startRaceButton");
@@ -94,10 +86,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // Get scoreboard elements
   playerScoreElement = document.getElementById("playerScore");
   computerScoreElement = document.getElementById("computerScore");
-
   // Set up button click handlers
   generateButton.addEventListener("click", generateNewMaze);
-  solveButton.addEventListener("click", solveMaze);
   clearButton.addEventListener("click", clearPath);
   resetButton.addEventListener("click", generateNewMaze);
   startRaceButton.addEventListener("click", startRace);
@@ -121,12 +111,9 @@ document.addEventListener("DOMContentLoaded", function () {
  */
 function generateNewMaze() {
   console.log("Generating new maze...");
-
   // Reset everything
-  isSolving = false;
   isSolved = false;
   doesMazeExist = false;
-  solutionPath = [];
 
   // Create the maze
   initializeEmptyMaze();
@@ -138,10 +125,11 @@ function generateNewMaze() {
 
   // Show the maze on screen
   displayMaze();
-
   // Update status
   doesMazeExist = true;
-  updateStatus("Maze generated! Click 'Solve Maze' to find the path.");
+  updateStatus(
+    "Maze generated! Race against the computer or press 'Clear Path' to reset."
+  );
   updateButtonStates();
 
   console.log("New maze generated successfully");
@@ -287,169 +275,8 @@ function displayMaze() {
   mazeContainer.appendChild(mazeGrid);
 }
 
-// ======== MAZE SOLVING ========
-// Functions for finding a path through the maze
-
-/**
- * Start solving the maze using DFS
- */
-function solveMaze() {
-  // Don't solve if we can't or shouldn't
-  if (!doesMazeExist || isSolving || isSolved) {
-    return;
-  }
-
-  console.log("Starting to solve the maze...");
-
-  // Update status
-  isSolving = true;
-  updateStatus("Solving maze using Depth-First Search...");
-  updateButtonStates();
-
-  // Clear any previous solution
-  clearVisualization();
-
-  // Start the solving process
-  // We need to use an async function for the animation
-  startSolving();
-}
-
-/**
- * Begin the actual solving process
- */
-async function startSolving() {
-  try {
-    // Keep track of visited cells and the path
-    const visited = new Set();
-    const path = [];
-
-    // Start from the beginning
-    const found = await depthFirstSearch(START_ROW, START_COL, visited, path);
-
-    // Process the result
-    if (found) {
-      // Solution found!
-      solutionPath = path;
-      isSolved = true;
-
-      // Show the solution path
-      await highlightSolution();
-
-      updateStatus(`Maze solved! Path found with ${path.length} steps.`);
-    } else {
-      // No solution found
-      updateStatus("No solution found! The maze might be unsolvable.");
-    }
-  } catch (error) {
-    console.error("Error solving maze:", error);
-    updateStatus("An error occurred while solving the maze.");
-  } finally {
-    // Always reset solving state
-    isSolving = false;
-    updateButtonStates();
-  }
-}
-
-/**
- * Depth-First Search algorithm
- * This is the main pathfinding algorithm
- */
-async function depthFirstSearch(row, col, visited, path) {
-  // Check if we've reached the end
-  if (row === END_ROW && col === END_COL) {
-    // Found the end! Add it to our path
-    path.push({ row, col });
-    return true;
-  }
-
-  // Check if this is a valid move
-  if (!isValidMove(row, col, visited)) {
-    return false;
-  }
-
-  // Mark this cell as visited
-  const cellKey = `${row},${col}`;
-  visited.add(cellKey);
-  path.push({ row, col });
-
-  // Visualize the current cell
-  await updateCellVisual(row, col, "current");
-  await sleep(SOLVING_SPEED);
-
-  // Mark the cell as visited (except start and end)
-  if (
-    (row !== START_ROW || col !== START_COL) &&
-    (row !== END_ROW || col !== END_COL)
-  ) {
-    await updateCellVisual(row, col, "visited");
-  }
-
-  // Try each of the four directions
-  const directions = [
-    [-1, 0], // Up
-    [1, 0], // Down
-    [0, -1], // Left
-    [0, 1], // Right
-  ];
-
-  for (let i = 0; i < directions.length; i++) {
-    const newRow = row + directions[i][0];
-    const newCol = col + directions[i][1];
-
-    // Try going this way
-    if (await depthFirstSearch(newRow, newCol, visited, path)) {
-      return true; // Found a solution in this direction!
-    }
-  }
-
-  // If we get here, no path was found in any direction
-  // Backtrack - remove this cell from our path
-  path.pop();
-  return false;
-}
-
-/**
- * Check if a move is valid for pathfinding
- */
-function isValidMove(row, col, visited) {
-  // Check if:
-  // 1. Inside the maze
-  // 2. Cell is a path (not a wall)
-  // 3. Not already visited
-
-  const cellKey = `${row},${col}`;
-
-  return (
-    row >= 0 &&
-    row < MAZE_ROWS && // Within vertical bounds
-    col >= 0 &&
-    col < MAZE_COLS && // Within horizontal bounds
-    maze[row][col] === PATH && // Is a path (not a wall)
-    !visited.has(cellKey) // Not already visited
-  );
-}
-
-/**
- * Highlight the solution path
- */
-async function highlightSolution() {
-  console.log("Highlighting solution path...");
-
-  for (let i = 0; i < solutionPath.length; i++) {
-    const cell = solutionPath[i];
-
-    // Skip start and end cells (they already have special styling)
-    if (
-      (cell.row === START_ROW && cell.col === START_COL) ||
-      (cell.row === END_ROW && cell.col === END_COL)
-    ) {
-      continue;
-    }
-
-    await updateCellVisual(cell.row, cell.col, "solution");
-    await sleep(SOLUTION_SPEED);
-  }
-}
+// ======== VISUALIZATION FUNCTIONS ========
+// Functions for updating cell visualization
 
 /**
  * Update how a cell looks
@@ -479,16 +306,14 @@ function clearVisualization() {
 }
 
 /**
- * Clear the solution path
+ * Clear any visualization from the maze
  */
 function clearPath() {
-  console.log("Clearing solution path...");
+  console.log("Clearing maze visuals...");
 
   clearVisualization();
   isSolved = false;
-  solutionPath = [];
-
-  updateStatus("Path cleared. Click 'Solve Maze' to find the path again.");
+  updateStatus("Path cleared. You can generate a new maze or start racing!");
   updateButtonStates();
 }
 
@@ -508,22 +333,17 @@ function updateStatus(message) {
 function updateButtonStates(countingDown = false) {
   // If counting down before a race, disable all buttons
   if (countingDown) {
-    solveButton.disabled = true;
     clearButton.disabled = true;
     generateButton.disabled = true;
     resetButton.disabled = true;
     startRaceButton.disabled = true;
     return;
   }
-
   // Normal button states
-  solveButton.disabled = !doesMazeExist || isSolving || isSolved || raceActive;
-  clearButton.disabled =
-    !doesMazeExist || (!isSolving && !isSolved) || raceActive;
-  generateButton.disabled = isSolving || raceActive;
-  resetButton.disabled = isSolving || raceActive;
-  startRaceButton.disabled = !doesMazeExist || isSolving;
-  // Difficulty buttons have been removed
+  clearButton.disabled = !doesMazeExist || !isSolved || raceActive;
+  generateButton.disabled = raceActive;
+  resetButton.disabled = raceActive;
+  startRaceButton.disabled = !doesMazeExist;
 }
 
 /**
@@ -609,10 +429,17 @@ async function findPath(row, col, visited, path) {
     path.push({ row, col });
     return true;
   }
-
   // Check if position is valid
   const cellKey = `${row},${col}`;
-  if (!isValidMove(row, col, visited)) {
+  // Check if: inside maze, is a path, and not already visited
+  if (
+    row < 0 ||
+    row >= MAZE_ROWS || // Not within vertical bounds
+    col < 0 ||
+    col >= MAZE_COLS || // Not within horizontal bounds
+    maze[row][col] !== PATH || // Not a path
+    visited.has(cellKey) // Already visited
+  ) {
     return false;
   }
 

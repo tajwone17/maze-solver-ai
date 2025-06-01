@@ -1,24 +1,22 @@
 # Super Simple Maze Solver: A Beginner's Guide
 
-This guide explains every important function in the Super Simple Maze Solver, breaking down complex concepts into easy-to-understand explanations. It's perfect for beginners who want to understand how maze generation, solving algorithms, and the race game mode work.
+This guide explains every important function in the Super Simple Maze Solver, breaking down complex concepts into easy-to-understand explanations. It's perfect for beginners who want to understand how maze generation and the race game mode work.
 
 ## Table of Contents
 
 1. [Introduction and Overview](#introduction-and-overview)
 2. [Core Concepts](#core-concepts)
 3. [Maze Generation Functions](#maze-generation-functions)
-4. [Maze Solving Functions](#maze-solving-functions)
+4. [Display and Visualization Functions](#display-and-visualization-functions)
 5. [Race Mode Functions](#race-mode-functions)
-6. [Display and Visualization Functions](#display-and-visualization-functions)
-7. [Utility Functions](#utility-functions)
-8. [Putting It All Together](#putting-it-all-together)
+6. [Utility Functions](#utility-functions)
+7. [Putting It All Together](#putting-it-all-together)
 
 ## Introduction and Overview
 
 The Super Simple Maze Solver demonstrates several important programming concepts:
 
 - **Maze generation** using recursive backtracking
-- **Pathfinding** with Depth-First Search (DFS)
 - **Game mechanics** for the player vs. computer race mode
 - **User interface** for displaying and interacting with the maze
 
@@ -78,10 +76,8 @@ maze[2][3];
 ```javascript
 function generateNewMaze() {
   // Reset variables
-  isSolving = false;
   isSolved = false;
   doesMazeExist = false;
-  solutionPath = [];
 
   // Create the maze
   initializeEmptyMaze();
@@ -94,7 +90,9 @@ function generateNewMaze() {
   // Show the maze and update UI
   displayMaze();
   doesMazeExist = true;
-  updateStatus("Maze generated! Click 'Solve Maze' to find the path.");
+  updateStatus(
+    "Maze generated! Race against the computer or press 'Clear Path' to reset."
+  );
   updateButtonStates();
 }
 ```
@@ -238,228 +236,117 @@ function isValidCell(row, col) {
 }
 ```
 
-## Maze Solving Functions
+## Display and Visualization Functions
 
-### `solveMaze()`
+### `displayMaze()`
 
-**What it does:** Starts the process of finding a path through the maze.
-
-**Step by step:**
-
-1. Checks if conditions are right for solving (maze exists and isn't already being solved)
-2. Updates the status message and button states
-3. Clears any previous solution visualization
-4. Calls `startSolving()` to begin the actual solving process
-
-**When it's used:** When you click the "Solve Maze" button
-
-```javascript
-function solveMaze() {
-  if (!doesMazeExist || isSolving || isSolved) {
-    return;
-  }
-
-  isSolving = true;
-  updateStatus("Solving maze using Depth-First Search...");
-  updateButtonStates();
-
-  clearVisualization();
-  startSolving();
-}
-```
-
-### `startSolving()`
-
-**What it does:** Manages the maze-solving process and handles the outcome.
+**What it does:** Creates the visual representation of the maze.
 
 **Step by step:**
 
-1. Creates a Set to track visited cells and an array for the path
-2. Calls `depthFirstSearch()` starting from the beginning position
-3. If a solution is found:
-   - Saves the path
-   - Sets the maze as solved
-   - Shows the solution path with `highlightSolution()`
-   - Updates the status message
-4. If no solution is found, shows an error message
-5. Always updates the state variables when finished
+1. Clears any existing maze
+2. Creates a grid element with the correct number of rows and columns
+3. For each cell in the maze:
+   - Creates a div element
+   - Assigns appropriate classes (wall, path, start, end)
+   - Adds it to the grid
+4. Adds the completed grid to the page
 
-**When it's used:** After `solveMaze()` to handle the solving process
+**When it's used:** After generating a maze
 
 ```javascript
-async function startSolving() {
-  try {
-    const visited = new Set();
-    const path = [];
+function displayMaze() {
+  // Clear existing maze
+  mazeContainer.innerHTML = "";
 
-    const found = await depthFirstSearch(START_ROW, START_COL, visited, path);
+  // Create grid
+  const mazeGrid = document.createElement("div");
+  mazeGrid.className = "maze-grid";
+  mazeGrid.style.gridTemplateColumns = `repeat(${MAZE_COLS}, 1fr)`;
+  mazeGrid.style.gridTemplateRows = `repeat(${MAZE_ROWS}, 1fr)`;
 
-    if (found) {
-      // Solution found!
-      solutionPath = path;
-      isSolved = true;
-      await highlightSolution();
-      updateStatus(`Maze solved! Path found with ${path.length} steps.`);
-    } else {
-      // No solution found
-      updateStatus("No solution found! The maze might be unsolvable.");
-    }
-  } catch (error) {
-    console.error("Error solving maze:", error);
-    updateStatus("An error occurred while solving the maze.");
-  } finally {
-    isSolving = false;
-    updateButtonStates();
-  }
-}
-```
+  // Create cells
+  for (let row = 0; row < MAZE_ROWS; row++) {
+    for (let col = 0; col < MAZE_COLS; col++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.id = `cell-${row}-${col}`;
 
-### `depthFirstSearch(row, col, visited, path)`
+      // Add appropriate class
+      if (maze[row][col] === WALL) {
+        cell.classList.add("wall");
+      } else {
+        cell.classList.add("path");
+      }
 
-**What it does:** Finds a path through the maze using the Depth-First Search algorithm.
+      // Special styling for start and end
+      if (row === START_ROW && col === START_COL) {
+        cell.classList.add("start");
+      } else if (row === END_ROW && col === END_COL) {
+        cell.classList.add("end");
+      }
 
-**Step by step:**
-
-1. Checks if the current position is the end point
-   - If it is, adds it to the path and returns true (solution found!)
-2. Checks if the current position is valid (not a wall, not already visited, within bounds)
-   - If it's not valid, returns false (can't go this way)
-3. Marks the current cell as visited and adds it to the path
-4. Visualizes the current cell for animation
-5. Tries each of the four directions (up, down, left, right):
-   - For each direction, recursively calls itself to explore that way
-   - If any direction leads to a solution, returns true
-6. If no direction leads to a solution, removes the current cell from the path (backtracking) and returns false
-
-**How it works:** Imagine you're in a maze with a piece of chalk:
-
-- At each intersection, mark where you've been
-- Try one path at a time, going as deep as you can
-- If you hit a dead end, go back to the last intersection and try a different direction
-- Keep doing this until you either find the exit or try all possible paths
-
-**When it's used:** During the maze-solving process to find a path from start to end
-
-```javascript
-async function depthFirstSearch(row, col, visited, path) {
-  // Check if reached the end
-  if (row === END_ROW && col === END_COL) {
-    path.push({ row, col });
-    return true;
-  }
-
-  // Check if valid move
-  if (!isValidMove(row, col, visited)) {
-    return false;
-  }
-
-  // Mark as visited and add to path
-  const cellKey = `${row},${col}`;
-  visited.add(cellKey);
-  path.push({ row, col });
-
-  // Visualize exploration
-  await updateCellVisual(row, col, "current");
-  await sleep(SOLVING_SPEED);
-
-  // Mark as visited (except start/end)
-  if (
-    (row !== START_ROW || col !== START_COL) &&
-    (row !== END_ROW || col !== END_COL)
-  ) {
-    await updateCellVisual(row, col, "visited");
-  }
-
-  // Try all four directions
-  const directions = [
-    [-1, 0], // Up
-    [1, 0], // Down
-    [0, -1], // Left
-    [0, 1], // Right
-  ];
-
-  for (let i = 0; i < directions.length; i++) {
-    const newRow = row + directions[i][0];
-    const newCol = col + directions[i][1];
-
-    if (await depthFirstSearch(newRow, newCol, visited, path)) {
-      return true; // Found solution in this direction!
+      mazeGrid.appendChild(cell);
     }
   }
 
-  // No solution found in any direction, backtrack
-  path.pop();
-  return false;
+  mazeContainer.appendChild(mazeGrid);
 }
 ```
 
-### `isValidMove(row, col, visited)`
+### `updateCellVisual(row, col, type)`
 
-**What it does:** Checks if a position is valid to move to during pathfinding.
+**What it does:** Changes the appearance of a cell in the maze.
 
 **Step by step:**
 
-1. Creates a unique key for the cell position
-2. Checks if the row and column are within the maze boundaries
-3. Checks if the cell is a path (not a wall)
-4. Checks if the cell hasn't been visited before
+1. Finds the cell element by its ID
+2. Removes any existing special classes
+3. Adds the new class to change its appearance
 
-**When it's used:** During the DFS algorithm to decide which cells can be explored
+**When it's used:** During showing player positions
 
 ```javascript
-function isValidMove(row, col, visited) {
-  const cellKey = `${row},${col}`;
+async function updateCellVisual(row, col, type) {
+  const cell = document.getElementById(`cell-${row}-${col}`);
+  if (!cell) return;
 
-  return (
-    row >= 0 &&
-    row < MAZE_ROWS && // Within vertical bounds
-    col >= 0 &&
-    col < MAZE_COLS && // Within horizontal bounds
-    maze[row][col] === PATH && // Is a path (not a wall)
-    !visited.has(cellKey) // Not already visited
-  );
+  // Remove existing special classes
+  cell.classList.remove("current", "visited", "solution");
+
+  // Add the new class
+  cell.classList.add(type);
 }
 ```
 
-### `highlightSolution()`
+### `clearVisualization()`
 
-**What it does:** Animates the solution path after the maze has been solved.
+**What it does:** Removes all visual indicators from the maze.
 
 **Step by step:**
 
-1. Goes through each cell in the solution path
-2. For each cell (except start and end cells), updates its appearance to show it's part of the solution
-3. Adds a delay between cells to create an animation effect
+1. Selects all cell elements
+2. Removes any special classes from them
 
-**When it's used:** After finding a solution to show the path from start to end
+**When it's used:** Before starting a race
 
 ```javascript
-async function highlightSolution() {
-  for (let i = 0; i < solutionPath.length; i++) {
-    const cell = solutionPath[i];
-
-    // Skip start and end cells
-    if (
-      (cell.row === START_ROW && cell.col === START_COL) ||
-      (cell.row === END_ROW && cell.col === END_COL)
-    ) {
-      continue;
-    }
-
-    await updateCellVisual(cell.row, cell.col, "solution");
-    await sleep(SOLUTION_SPEED);
-  }
+function clearVisualization() {
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach((cell) => {
+    cell.classList.remove("visited", "current", "solution", "user", "computer");
+  });
 }
 ```
 
 ### `clearPath()`
 
-**What it does:** Removes the solution path visualization.
+**What it does:** Clears any visualization from the maze.
 
 **Step by step:**
 
 1. Calls `clearVisualization()` to remove all visual markers
-2. Resets solution-related variables
+2. Resets visualization-related variables
 3. Updates the status message and button states
 
 **When it's used:** When you click "Clear Path"
@@ -468,10 +355,29 @@ async function highlightSolution() {
 function clearPath() {
   clearVisualization();
   isSolved = false;
-  solutionPath = [];
 
-  updateStatus("Path cleared. Click 'Solve Maze' to find the path again.");
+  updateStatus("Path cleared. You can generate a new maze or start racing!");
   updateButtonStates();
+}
+```
+
+### `clearPlayerVisuals()`
+
+**What it does:** Removes player and computer visual indicators.
+
+**Step by step:**
+
+1. Selects all cell elements
+2. Removes just the "user" and "computer" classes
+
+**When it's used:** Before updating player positions in race mode
+
+```javascript
+function clearPlayerVisuals() {
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach((cell) => {
+    cell.classList.remove("user", "computer");
+  });
 }
 ```
 
@@ -485,7 +391,7 @@ function clearPath() {
 
 1. Checks if a maze exists and there's not already a race active
 2. Resets the race state (positions, winner)
-3. Clears any visualizations from prior solving
+3. Clears any visualizations
 4. Calls `findComputerPath()` to determine how the computer will navigate
 5. Updates the UI and disables buttons
 6. Displays the player and computer starting positions
@@ -582,10 +488,9 @@ async function findComputerPath() {
 
 ### `findPath(row, col, visited, path)`
 
-**What it does:** A simplified version of DFS to find a path for the computer.
+**What it does:** A pathfinding algorithm to find a path for the computer.
 
 **Step by step:**
-Similar to `depthFirstSearch()` but without visualization:
 
 1. Checks if at the end point
 2. Checks if the position is valid
@@ -605,7 +510,15 @@ async function findPath(row, col, visited, path) {
 
   // Check if position is valid
   const cellKey = `${row},${col}`;
-  if (!isValidMove(row, col, visited)) {
+  // Check if: inside maze, is a path, and not already visited
+  if (
+    row < 0 ||
+    row >= MAZE_ROWS || // Not within vertical bounds
+    col < 0 ||
+    col >= MAZE_COLS || // Not within horizontal bounds
+    maze[row][col] !== PATH || // Not a path
+    visited.has(cellKey) // Already visited
+  ) {
     return false;
   }
 
@@ -872,129 +785,6 @@ function resetRace() {
 }
 ```
 
-## Display and Visualization Functions
-
-### `displayMaze()`
-
-**What it does:** Creates the visual representation of the maze.
-
-**Step by step:**
-
-1. Clears any existing maze
-2. Creates a grid element with the correct number of rows and columns
-3. For each cell in the maze:
-   - Creates a div element
-   - Assigns appropriate classes (wall, path, start, end)
-   - Adds it to the grid
-4. Adds the completed grid to the page
-
-**When it's used:** After generating a maze
-
-```javascript
-function displayMaze() {
-  // Clear existing maze
-  mazeContainer.innerHTML = "";
-
-  // Create grid
-  const mazeGrid = document.createElement("div");
-  mazeGrid.className = "maze-grid";
-  mazeGrid.style.gridTemplateColumns = `repeat(${MAZE_COLS}, 1fr)`;
-  mazeGrid.style.gridTemplateRows = `repeat(${MAZE_ROWS}, 1fr)`;
-
-  // Create cells
-  for (let row = 0; row < MAZE_ROWS; row++) {
-    for (let col = 0; col < MAZE_COLS; col++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.id = `cell-${row}-${col}`;
-
-      // Add appropriate class
-      if (maze[row][col] === WALL) {
-        cell.classList.add("wall");
-      } else {
-        cell.classList.add("path");
-      }
-
-      // Special styling for start and end
-      if (row === START_ROW && col === START_COL) {
-        cell.classList.add("start");
-      } else if (row === END_ROW && col === END_COL) {
-        cell.classList.add("end");
-      }
-
-      mazeGrid.appendChild(cell);
-    }
-  }
-
-  mazeContainer.appendChild(mazeGrid);
-}
-```
-
-### `updateCellVisual(row, col, type)`
-
-**What it does:** Changes the appearance of a cell in the maze.
-
-**Step by step:**
-
-1. Finds the cell element by its ID
-2. Removes any existing special classes
-3. Adds the new class to change its appearance
-
-**When it's used:** During solving, highlighting the solution, and showing player positions
-
-```javascript
-async function updateCellVisual(row, col, type) {
-  const cell = document.getElementById(`cell-${row}-${col}`);
-  if (!cell) return;
-
-  // Remove existing special classes
-  cell.classList.remove("current", "visited", "solution");
-
-  // Add the new class
-  cell.classList.add(type);
-}
-```
-
-### `clearVisualization()`
-
-**What it does:** Removes all visual indicators from the maze.
-
-**Step by step:**
-
-1. Selects all cell elements
-2. Removes any special classes from them
-
-**When it's used:** Before solving, clearing the path, or starting a race
-
-```javascript
-function clearVisualization() {
-  const cells = document.querySelectorAll(".cell");
-  cells.forEach((cell) => {
-    cell.classList.remove("visited", "current", "solution", "user", "computer");
-  });
-}
-```
-
-### `clearPlayerVisuals()`
-
-**What it does:** Removes player and computer visual indicators.
-
-**Step by step:**
-
-1. Selects all cell elements
-2. Removes just the "user" and "computer" classes
-
-**When it's used:** Before updating player positions in race mode
-
-```javascript
-function clearPlayerVisuals() {
-  const cells = document.querySelectorAll(".cell");
-  cells.forEach((cell) => {
-    cell.classList.remove("user", "computer");
-  });
-}
-```
-
 ## Utility Functions
 
 ### `updateStatus(message)`
@@ -1020,10 +810,7 @@ function updateStatus(message) {
 **Step by step:**
 
 1. If counting down, disables all buttons
-2. Otherwise, sets each button's state based on various conditions:
-   - Solve button: disabled if no maze, already solving, already solved, or race active
-   - Clear button: disabled if no maze, no solution to clear, or race active
-   - Other buttons: disabled based on their relevant conditions
+2. Otherwise, sets each button's state based on various conditions
 
 **When it's used:** Whenever the program state changes
 
@@ -1031,7 +818,6 @@ function updateStatus(message) {
 function updateButtonStates(countingDown = false) {
   // If counting down, disable all buttons
   if (countingDown) {
-    solveButton.disabled = true;
     clearButton.disabled = true;
     generateButton.disabled = true;
     resetButton.disabled = true;
@@ -1040,12 +826,10 @@ function updateButtonStates(countingDown = false) {
   }
 
   // Normal button states
-  solveButton.disabled = !doesMazeExist || isSolving || isSolved || raceActive;
-  clearButton.disabled =
-    !doesMazeExist || (!isSolving && !isSolved) || raceActive;
-  generateButton.disabled = isSolving || raceActive;
-  resetButton.disabled = isSolving || raceActive;
-  startRaceButton.disabled = !doesMazeExist || isSolving;
+  clearButton.disabled = !doesMazeExist || !isSolved || raceActive;
+  generateButton.disabled = raceActive;
+  resetButton.disabled = raceActive;
+  startRaceButton.disabled = !doesMazeExist;
 }
 ```
 
@@ -1071,7 +855,7 @@ function sleep(milliseconds) {
 
 The Super Simple Maze Solver demonstrates several important programming patterns:
 
-1. **Backtracking Algorithms** - Used in both maze generation and solving
+1. **Backtracking Algorithms** - Used in maze generation
 2. **Asynchronous Programming** - Used for animations with async/await and Promises
 3. **Event Handling** - Processing keyboard input and button clicks
 4. **DOM Manipulation** - Creating and updating the visual maze
